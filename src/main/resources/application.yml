@@ -1,1 +1,11 @@
-spring.application.name: alert
+spring:
+  profiles:
+    active: dev
+    group:
+      dev: dev,env
+      prod: prod,env
+  threads:
+    virtual:
+      enabled: true
+server:
+  port: 0
