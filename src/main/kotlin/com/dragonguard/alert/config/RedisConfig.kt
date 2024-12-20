@@ -1,6 +1,6 @@
 package com.dragonguard.alert.config
 
-import com.fasterxml.jackson.databind.DeserializationFeature
+import com.fasterxml.jackson.annotation.JsonInclude
 import com.fasterxml.jackson.databind.ObjectMapper
 import com.fasterxml.jackson.module.kotlin.registerKotlinModule
 import org.springframework.beans.factory.annotation.Value
@@ -13,7 +13,6 @@ import org.springframework.data.redis.connection.RedisStandaloneConfiguration
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory
 import org.springframework.data.redis.core.RedisTemplate
 import org.springframework.data.redis.listener.RedisMessageListenerContainer
-import org.springframework.data.redis.serializer.Jackson2JsonRedisSerializer
 import org.springframework.data.redis.serializer.StringRedisSerializer
 
 @Configuration
@@ -33,11 +32,14 @@ class RedisConfig {
     }
 
     @Bean
-    fun redisTemplate(redisConnectionFactory: RedisConnectionFactory): RedisTemplate<String, Any> {
-        return RedisTemplate<String, Any>().apply {
+    fun redisTemplate(
+        redisConnectionFactory: RedisConnectionFactory,
+        objectMapper: ObjectMapper
+    ): RedisTemplate<String, String> {
+        return RedisTemplate<String, String>().apply {
             connectionFactory = redisConnectionFactory
             keySerializer = StringRedisSerializer()
-            valueSerializer = Jackson2JsonRedisSerializer(Any::class.java)
+            valueSerializer = StringRedisSerializer()
         }
     }
 
@@ -53,11 +55,9 @@ class RedisConfig {
     }
 
     @Bean
-    fun objectMapper(): ObjectMapper {
-        return ObjectMapper().apply {
-            registerKotlinModule()
-            configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
-        }
+    fun objectMapper(): ObjectMapper = ObjectMapper().apply {
+        registerKotlinModule()
+        setSerializationInclusion(JsonInclude.Include.NON_NULL)
     }
 
     @Bean

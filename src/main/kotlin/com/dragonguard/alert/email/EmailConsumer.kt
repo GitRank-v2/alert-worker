@@ -10,6 +10,7 @@ import org.springframework.data.redis.listener.RedisMessageListenerContainer
 import org.springframework.mail.javamail.JavaMailSender
 import org.springframework.mail.javamail.MimeMessageHelper
 import org.springframework.stereotype.Component
+import java.nio.charset.StandardCharsets
 
 @Component
 class EmailConsumer(
@@ -28,7 +29,12 @@ class EmailConsumer(
 
     override fun onMessage(message: Message, pattern: ByteArray?) {
         try {
-            val payload = String(message.body)
+            var payload = message.body.toString(StandardCharsets.UTF_8)
+
+            val jsonStartIndex = payload.indexOf("{")
+            if (jsonStartIndex != -1) {
+                payload = payload.substring(jsonStartIndex)
+            }
             val request = objectMapper.readValue(payload, EmailRequest::class.java)
             sendVerificationEmail(request.email, request.code)
         } catch (e: Exception) {
